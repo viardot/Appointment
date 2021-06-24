@@ -65,6 +65,29 @@ public class Database {
     } 
   }
 
+  public Set<Appointment> getAppointmentsByPeriod(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    
+    Set<Appointment> set = new HashSet<>();
+
+    long start = Util.toEpoch(startDateTime);
+    long end = Util.toEpoch(endDateTime);
+    try (Connection con = connectDB()) {
+      Statement stmt = con.createStatement();
+      String sql = "SELECT * FROM Appointments WHERE StartDateTime >= '"+ start + "' and EndDateTime <= '" + end + "'";
+      ResultSet rs = stmt.executeQuery(sql);
+      while(rs.next()){
+        Appointment appointment = new Appointment(rs.getString("subject")
+	       	                               ,Util.toLocalDateTime(rs.getLong("startDateTime"))
+					       ,Util.toLocalDateTime(rs.getLong("endDateTime")));
+        set.add(appointment);  
+      }
+    } catch (ClassNotFoundException | SQLException e) {
+      System.err.println("Error getting appointments by priod");
+      e.printStackTrace();
+    }
+    return set;
+  }
+
   public Set<Appointment> getAppointmentsBySubject(String subject) {
 
     String mySubject = null;
@@ -93,54 +116,54 @@ public class Database {
   
   public Set<Appointment> getFirstSlot(){
 	  
-	Set<Appointment> set = new HashSet<>();
+    Set<Appointment> set = new HashSet<>();
 	
     LocalDateTime ldt = LocalDateTime.now();
 	Long epochLdt = Util.toEpoch(ldt);
 	
-	Appointment firstSlot = new Appointment();
+    Appointment firstSlot = new Appointment();
 	
     try (Connection con = connectDB()) {
       Statement stmt = con.createStatement();
 
-	  while (firstSlot.getStartDateTime() == null) {
+      while (firstSlot.getStartDateTime() == null) {
 
-		String sql = "SELECT MIN(startDateTime) AS startDateTime, endDateTime FROM (SELECT * FROM Appointments WHERE startDateTime > '" + epochLdt + "') GROUP BY endDateTime";
+        String sql = "SELECT MIN(startDateTime) AS startDateTime, endDateTime FROM (SELECT * FROM Appointments WHERE startDateTime > '" + epochLdt + "') GROUP BY endDateTime";
         ResultSet rs = stmt.executeQuery(sql);
-		Appointment a = new Appointment();
+	Appointment a = new Appointment();
         while (rs.next()){
            a.setStartDateTime(Util.toLocalDateTime(rs.getLong("startDateTime")));
-		   a.setEndDateTime(Util.toLocalDateTime(rs.getLong("endDateTime")));
+           a.setEndDateTime(Util.toLocalDateTime(rs.getLong("endDateTime")));
         }
 
         sql = "SELECT startDateTime, MIN(endDateTime) AS endDateTime FROM (SELECT * FROM Appointments WHERE endDateTime > '" + epochLdt + "') GROUP BY startDateTime";
         rs = stmt.executeQuery(sql);
-		Appointment b = new Appointment();		
+	Appointment b = new Appointment();		
         while (rs.next()){
            b.setStartDateTime(Util.toLocalDateTime(rs.getLong("startDateTime")));
-		   b.setEndDateTime(Util.toLocalDateTime(rs.getLong("endDateTime")));
+           b.setEndDateTime(Util.toLocalDateTime(rs.getLong("endDateTime")));
         }
 
         if (a.getStartDateTime() == null && b.getEndDateTime() == null) {
-		  firstSlot.setSubject("There is no future appointment.");
+	      firstSlot.setSubject("There is no future appointment.");
 	      firstSlot.setStartDateTime(Util.toLocalDateTime(epochLdt));
-		  firstSlot.setEndDateTime(null);
-		} else {
+	      firstSlot.setEndDateTime(null);
+	} else {
 
-		  if (a.getStartDateTime().isBefore(b.getEndDateTime())) {
-		    firstSlot.setSubject("First free slot for an appointment.");
-		    firstSlot.setStartDateTime(Util.toLocalDateTime(epochLdt));
-		    firstSlot.setEndDateTime(a.getStartDateTime());
-		  }
+	  if (a.getStartDateTime().isBefore(b.getEndDateTime())) {
+	    firstSlot.setSubject("First free slot for an appointment.");
+	    firstSlot.setStartDateTime(Util.toLocalDateTime(epochLdt));
+            firstSlot.setEndDateTime(a.getStartDateTime());
+          }
 		
-	      if (a.getStartDateTime().isAfter(b.getEndDateTime())) {
+	  if (a.getStartDateTime().isAfter(b.getEndDateTime())) {
             epochLdt = Util.toEpoch(b.getEndDateTime());
-		  }
+          }
 		
-		  if (a.getStartDateTime().isEqual(b.getEndDateTime())) {
-            epochLdt = Util.toEpoch(a.getEndDateTime());
-		  }
-		}
+          if (a.getStartDateTime().isEqual(b.getEndDateTime())) {
+             epochLdt = Util.toEpoch(a.getEndDateTime());
+	  }
+        }
       }
 	  
     } catch (ClassNotFoundException | SQLException e) {
@@ -148,7 +171,7 @@ public class Database {
       e.printStackTrace();
     }
 	
-	set.add(firstSlot);
-	return set;
+    set.add(firstSlot);
+    return set;
   }
 }
