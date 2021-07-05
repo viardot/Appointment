@@ -2,6 +2,7 @@ import java.time.LocalDateTime;
 import java.time.DateTimeException;
 
 import java.util.Set;
+import java.util.HashSet;
 
 public class Agenda {
   public static void main (String[] args) {
@@ -9,14 +10,14 @@ public class Agenda {
     switch (args.length) {
       case 0:
         getFirstSlot();
-	    break;
+	break;
     
       case 1: 
-	    getAppointmentsBySubject(args[0]);
-	    break;
+	getAppointmentsBySubject(args[0]);
+	break;
 	
-	 case 2:
-	    getApointmenstByPeriod(args[0], args[1]);
+      case 2:
+	getApointmenstByPeriod(args[0], args[1]);
         break;
 		
      case 3:
@@ -36,23 +37,36 @@ public class Agenda {
   public static void  getFirstSlot(){
 
     Appointment request = new Appointment(null, null, null);
-    Set<Appointment> appointments = ConnectToRemoteHost.getData(request);
-    for(Appointment a : appointments) {
-      System.out.println(a.getSubject());
-      System.out.println(a.getStartDateTime());
-      System.out.println(a.getEndDateTime());
+    Message<Appointment> message = new Message("getFirstSlot", request);
+    message = ConnectToRemoteHost.<Appointment>getData(message);
+    
+    if (message.getCode() == 100) {
+      HashSet<Appointment> appointments = message.getMessageObjects();
+      for(Appointment a : appointments) {
+        System.out.println(a.getSubject());
+        System.out.println(a.getStartDateTime());
+        System.out.println(a.getEndDateTime());
+      }
+    } else {
+      System.err.println(message.getMessage() + "\nStatus code " + message.getCode());
     }
   }
 
   public static void getAppointmentsBySubject(String subject){
   	  
     Appointment request = new Appointment(subject, null, null);
-
-    Set<Appointment> appointments = ConnectToRemoteHost.getData(request);
-    for(Appointment a : appointments) {
-      System.out.println(a.getSubject());
-      System.out.println(a.getStartDateTime());
-      System.out.println(a.getEndDateTime());
+    Message<Appointment> message = new Message("getAppointmentsBySubject", request);
+    message = ConnectToRemoteHost.<Appointment>getData(message);
+    
+    if (message.getCode() == 100) {
+      HashSet<Appointment> appointments = message.getMessageObjects();
+      for(Appointment a : appointments) {
+        System.out.println(a.getSubject());
+        System.out.println(a.getStartDateTime());
+        System.out.println(a.getEndDateTime());
+      }
+    } else {
+      System.err.println(message.getMessage() + "\nStatus code " + message.getCode());
     }
   }
   
@@ -68,11 +82,18 @@ public class Agenda {
         System.exit(1);
       }
       Appointment request = new Appointment(null, startDateTime, endDateTime);
-      Set<Appointment> appointments = ConnectToRemoteHost.getData(request);
-      for(Appointment a : appointments) {
-        System.out.println(a.getSubject());
-	System.out.println(a.getStartDateTime());
-	System.out.println(a.getEndDateTime());
+      Message<Appointment> message = new Message("getAppointmentsByPeriod", request);
+      message = ConnectToRemoteHost.<Appointment>getData(message);
+
+      if (message.getCode() ==  100) {
+        HashSet<Appointment> appointments = message.getMessageObjects();
+        for(Appointment a : appointments) {
+          System.out.println(a.getSubject());
+	  System.out.println(a.getStartDateTime());
+	  System.out.println(a.getEndDateTime());
+        }
+      } else { 
+        System.err.println(message.getMessage() + "\nStatus code " + message.getCode());
       }
     } catch (DateTimeException e) {
       e.printStackTrace();
@@ -92,7 +113,11 @@ public class Agenda {
 	    System.exit(1);
 	  }
       Appointment request =  new Appointment(subject, startDateTime, endDateTime); 
-      ConnectToRemoteHost.setData(request);
+      Message<Appointment> message = new Message("setAppointment", request); 
+      message = ConnectToRemoteHost.<Appointment>getData(message);
+      if (message.getCode() != 100){
+        System.err.println(message.getMessage() + "\nStatus code " + message.getCode());
+      }
     } catch (DateTimeException e) {
       System.err.println("Error processing date time input");
       System.err.println("Expected date time format: yyyy-mm-ddTHH:mm:ss");
