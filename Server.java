@@ -75,72 +75,137 @@ public class Server {
   private static void handleRead(SelectionKey key) throws IOException {
  
     SocketChannel socket = (SocketChannel) key.channel();
-
+    
     try {
-      byte[] byteArray = null;
       while (socket.isConnected()) {
 	
-        Message<Appointment> message = Util.readMessageFromSocket(socket);
-        Appointment request = message.<Appointment>getMessageObject();
-	switch (message.getEvent()) {
-	  case "getFirstSlot":
-            if (request.getSubject() == null && request.getStartDateTime() == null && request.getEndDateTime() == null) {
-	      try {
-	        message.setMessageObjects(db.getFirstSlot());
-	        message.setMessage("OK");
-	        message.setCode(100);
-	      } catch (SQLException | ClassNotFoundException e) {
-                message.setMessage("NOK");
-		message.setCode(400);
-	      }
-            }
-	    break;
+        Message message = Util.readMessageFromSocket(socket);
+	message.setMessage("NOK");
+	message.setCode(500);
+	if (message.getEvent().equals("getFirstSlot") || message.getEvent().equals("getAppointmentsBySubject") || message.getEvent().equals("getAppointmentsByPeriod") || message.getEvent().equals("setAppointment")) {
+	  
+	  Appointment request = (Appointment) message.<Appointment>getMessageObject();
+	
+	  switch (message.getEvent()) {
+	    case "getFirstSlot":
+	      if (request.getSubject() == null && request.getStartDateTime() == null && request.getEndDateTime() == null) {
+	        try {
+	          message.setMessageObjects(db.getFirstSlot());
+	          message.setMessage("OK");
+	          message.setCode(100);
+	        } catch (SQLException | ClassNotFoundException e) {
+                  message.setMessage("NOK");
+		  message.setCode(500);
+	        }
+              }
+	      break;
 
-          case "getAppointmentsBySubject":
-            if (request.getSubject() != null && request.getStartDateTime() == null && request.getEndDateTime() == null) {
-	      try { 
-	        message.setMessageObjects(db.getAppointmentsBySubject(request.getSubject()));
-	        message.setMessage("OK");
-		message.setCode(100);
-	      } catch (SQLException | ClassNotFoundException e) {
-                message.setMessage("NOK");
-		message.setCode(400);
-	      }
-            }
-	    break;
+            case "getAppointmentsBySubject":
+              if (request.getSubject() != null && request.getStartDateTime() == null && request.getEndDateTime() == null) {
+	        try { 
+	          message.setMessageObjects(db.getAppointmentsBySubject(request.getSubject()));
+	          message.setMessage("OK");
+		  message.setCode(100);
+	        } catch (SQLException | ClassNotFoundException e) {
+                  message.setMessage("NOK");
+		  message.setCode(500);
+	        }
+              }
+	      break;
       
-	  case "getAppointmentsByPeriod":
-            if (request.getSubject() == null && request.getStartDateTime() != null && request.getEndDateTime() != null) {  
-	      try {
-	        message.setMessageObjects(db.getAppointmentsByPeriod(request.getStartDateTime(), request.getEndDateTime()));
-	        message.setMessage("OK");
-		message.setCode(100);
-	      } catch (SQLException | ClassNotFoundException e) {
-                message.setMessage("NOK");
-		message.setCode(400);
-	      }
-            }
-	    break;
+	    case "getAppointmentsByPeriod":
+              if (request.getSubject() == null && request.getStartDateTime() != null && request.getEndDateTime() != null) {  
+	        try {
+	          message.setMessageObjects(db.getAppointmentsByPeriod(request.getStartDateTime(), request.getEndDateTime()));
+	          message.setMessage("OK");
+		  message.setCode(100);
+	        } catch (SQLException | ClassNotFoundException e) {
+                  message.setMessage("NOK");
+		  message.setCode(500);
+	        }
+              }
+	      break;
 
-	  case "setAppointment":
-            if (request.getSubject() != null && request.getStartDateTime() != null && request.getEndDateTime() != null) {
-	      Set<Appointment> appointments = null;
-	      try {
-                String sql = Util.toSQLInsert(request);
-                appointments = db.setAppointment(sql);
-	        message.setMessage("OK");
-		message.setCode(100);
-	      } catch (SQLException | ClassNotFoundException e) {
-                message.setMessage("NOK");
-		message.setCode(400);
-	      }
-            }
-	    break;
+	    case "setAppointment":
+              if (request.getSubject() != null && request.getStartDateTime() != null && request.getEndDateTime() != null) {
+	        Set<Appointment> appointments = null;
+	        try {
+                  String sql = request.toSQLInsert();
+		  appointments = db.<Appointment>setItem(sql);
+		  message.setMessage("OK");
+		  message.setCode(100);
+	        } catch (SQLException | ClassNotFoundException e) {
+                  message.setMessage("NOK");
+		  message.setCode(500);
+	        }
+              }
+	      break;
 
-	  default:
-	    message.setMessage("The event " +  message.getEvent() + " does not exist.");
-	    message.setCode(400);
-	    Util.writeMessageToSocket(socket, message);
+	    default:
+	      message.setMessage("The event " +  message.getEvent() + " does not exist.");
+	      message.setCode(500);
+	  }
+	}
+
+	if (message.getEvent().equals("getNextAssignment") || message.getEvent().equals("setAssignment") || message.getEvent().equals("getAssignmentsBySubject") || message.getEvent().equals("getAssignmentsByDueDateTime")) {
+
+	  Assignment request = (Assignment) message.<Assignment>getMessageObject();
+
+	  switch (message.getEvent()) {
+            case "getNextAssignment":
+              if (request.getSubject() == null && request.getDueDateTime() == null){
+                try {
+		  message.setMessageObjects(db.getNextAssignment());
+		  message.setMessage("OK");
+		  message.setCode(100);
+		} catch (SQLException | ClassNotFoundException e) {
+                  message.setMessage("NOK - next aasignment");
+		  message.setCode(500);
+		}
+	      }
+              break;
+	    case "getAssignmentsBySubject":
+              if (request.getSubject() != null && request.getDueDateTime() == null) {
+	        try {    
+		  message.setMessageObjects(db.getAssignmentsBySubject(request.getSubject()));
+	          message.setMessage("OK");
+		  message.setCode(100);
+	        } catch (SQLException | ClassNotFoundException e) {
+                  message.setMessage("NOK");
+		  message.setCode(500);
+	        }
+	      }
+	      break;
+	    case "getAssignmentsByDueDateTime":
+              if (request.getSubject() == null && request.getDueDateTime() != null) {
+	        try {    
+		  message.setMessageObjects(db.getAssignmentsByDueDateTime(request.getDueDateTime()));
+	          message.setMessage("OK");
+		  message.setCode(100);
+	        } catch (SQLException | ClassNotFoundException e) {
+                  message.setMessage("NOK");
+		  message.setCode(500);
+	        }
+	      }
+	      break;
+	    case "setAssignment":
+	      if (request.getSubject() != null && request.getDueDateTime() != null) {
+	        Set<Assignment> assignments = null;
+	        try {
+	          String sql = request.toSQLInsert();
+		  assignments = db.<Assignment>setItem(sql);
+	          message.setMessage("OK");
+	          message.setCode(100);
+		} catch (SQLException | ClassNotFoundException e) {
+                  message.setMessage("NOK");
+		  message.setCode(500);
+		}
+	      }
+	      break;
+            default:
+              message.setMessage("The event " + message.getEvent() + " does not exist.");
+              message.setCode(500);
+	  }
 	}
 	Util.writeMessageToSocket(socket, message);
 	socket.close();

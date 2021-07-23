@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public class Database {
 
@@ -46,15 +47,16 @@ public class Database {
 
   private final void initDatabase (Statement stmt) throws SQLException {
     
-    String sql = " CREATE TABLE IF NOT EXISTS Appointments ("
-	    + "Subject longvarchar,"
-	    + "startDateTime bigint,"
-	    + "endDateTime bigint)";
+    Appointment appointment = new Appointment();
+    String sql = appointment.createTable();
+    stmt.executeUpdate(sql);
 
+    Assignment assignment = new Assignment();
+    sql = assignment.createTable();
     stmt.executeUpdate(sql);
   }
 
-  public HashSet<Appointment> setAppointment (String sql) throws SQLException, ClassNotFoundException {
+  public <T> HashSet<T> setItem (String sql) throws SQLException, ClassNotFoundException {
 
     Connection con = connectDB();
     Statement stmt = con.createStatement();
@@ -77,7 +79,8 @@ public class Database {
         Appointment appointment = new Appointment(rs.getString("subject")
 	       	                               ,Util.toLocalDateTime(rs.getLong("startDateTime"))
 					       ,Util.toLocalDateTime(rs.getLong("endDateTime")));
-        set.add(appointment);  
+        appointment.setUUID(UUID.fromString(rs.getString("UUID")));
+	set.add(appointment);  
     }
     return set;
   }
@@ -99,6 +102,7 @@ public class Database {
 	    startDateTime = Util.toLocalDateTime(rs.getLong("startDateTime"));
 	    endDateTime   = Util.toLocalDateTime(rs.getLong("endDateTime"));
 	    Appointment appointment = new Appointment(mySubject, startDateTime, endDateTime);
+            appointment.setUUID(UUID.fromString(rs.getString("UUID")));
 	    appointments.add(appointment);
     }
     return appointments;
@@ -109,7 +113,7 @@ public class Database {
     HashSet<Appointment> set = new HashSet<>();
 	
     LocalDateTime ldt = LocalDateTime.now();
-	Long epochLdt = Util.toEpoch(ldt);
+    long epochLdt = Util.toEpoch(ldt);
 	
     Appointment firstSlot = new Appointment();
 	
@@ -158,4 +162,67 @@ public class Database {
     set.add(firstSlot);
     return set;
   }
+
+  public HashSet<Assignment> getNextAssignment() throws SQLException, ClassNotFoundException {
+    
+    HashSet<Assignment> set = new HashSet<>();
+	
+    LocalDateTime ldt = LocalDateTime.now();
+    long epochLdt = Util.toEpoch(ldt);
+	
+    Assignment assignment = new Assignment("No upcoming assingment", null);
+    
+    Connection con = connectDB();
+    Statement stmt = con.createStatement();
+    
+    String sql = "SELECT MIN(dueDateTime) AS dueDateTime, subject FROM Assignments WHERE dueDateTime > '" + epochLdt + "' GROUP BY subject"; 
+    ResultSet rs = stmt.executeQuery(sql);
+    while (rs.next()){
+      assignment.setDueDateTime(Util.toLocalDateTime(rs.getLong("dueDateTime")));
+      assignment.setSubject(rs.getString("subject"));
+    }
+    set.add(assignment);
+    return set;
+  }
+
+  public HashSet<Assignment> getAssignmentsBySubject(String subject) throws SQLException, ClassNotFoundException {
+
+    String mySubject = null;
+    LocalDateTime dueDateTime = null;
+
+    HashSet<Assignment> assignments = new HashSet<>();
+    
+    Connection con = connectDB();
+    Statement stmt = con.createStatement();
+    String sql = "SELECT * FROM Assignments WHERE subject = '" + subject + "'";
+    ResultSet rs = stmt.executeQuery(sql);
+    while (rs.next()){
+	    mySubject     = rs.getString("subject");
+	    dueDateTime = Util.toLocalDateTime(rs.getLong("dueDateTime"));
+	    Assignment assignment = new Assignment(mySubject, dueDateTime);
+            assignment.setUUID(UUID.fromString(rs.getString("UUID")));
+	    assignments.add(assignment);
+    }
+    return assignments;
+  }
+
+  public HashSet<Assignment> getAssignmentsByDueDateTime(LocalDateTime dueDateTime) throws SQLException, ClassNotFoundException {
+
+    HashSet<Assignment> set = new HashSet<>();
+    
+    long due = Util.toEpoch(dueDateTime);
+
+    Connection con = connectDB();
+    Statement stmt = con.createStatement();
+    String sql = "SELECT * FROM Assignments WHERE dueDateTime = '" + due + "'";
+    ResultSet rs = stmt.executeQuery(sql);
+    while (rs.next()){
+        Assignment assignment = new Assignment(rs.getString("subject")
+					       ,Util.toLocalDateTime(rs.getLong("dueDateTime")));
+        assignment.setUUID(UUID.fromString(rs.getString("UUID")));
+        set.add(assignment);  
+    }
+    return set;
+  }
+
 }

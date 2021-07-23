@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.io.InputStream;
 
 import java.util.Set;
+import java.util.UUID;
 
 public class Util {
 
@@ -44,15 +45,6 @@ public class Util {
     return ldt;
   }
   
-  public static String toSQLInsert(Appointment appointment) {
-    long start = toEpoch(appointment.getStartDateTime());
-    long end   = toEpoch(appointment.getEndDateTime());
-	
-    String sql = "INSERT INTO Appointments VALUES('" + appointment.getSubject() + "', '" + start + "', '" + end + "')";
-	
-    return sql;  
-  }
-
   public static <T extends Serializable> void writeMessageToSocket(SocketChannel socket, Message<T> message) {
 
     try (ByteArrayOutputStream baos = new ByteArrayOutputStream();

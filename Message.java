@@ -25,7 +25,6 @@ public class Message <T extends Serializable> implements Serializable {
   public Message (String event, T messageObject) {
     this.secretKey = Util.encryptSecretKey();
     this.initializationVector = Util.createInitializationVector();
-    this.uuid = UUID.randomUUID();
     this.event = event;
     this.messageObject = Util.SealObject(messageObject, secretKey, initializationVector);
   }
@@ -33,7 +32,7 @@ public class Message <T extends Serializable> implements Serializable {
   public Message (String message, Integer code, HashSet<T> messageObjects) {
     this.secretKey = Util.encryptSecretKey();
     this.initializationVector = Util.createInitializationVector();
-    this.uuid = UUID.randomUUID();
+    //this.uuid = UUID.randomUUID();
     this.message = message;
     this.code = code;
     this.messageObjects = Util.SealObject(messageObjects, secretKey, initializationVector);
@@ -49,7 +48,7 @@ public class Message <T extends Serializable> implements Serializable {
   public void setEvent(String event)     { this.event = event; }
   public void setMessage(String message) { this.message = message; }
   public void setCode(Integer code)      { this.code = code; }
-  public void setMessageObject(T messageObject)        { this.messageObject = Util.SealObject(messageObject, secretKey, initializationVector); }
+  public void setMessageObject(T messageObject)            { this.messageObject = Util.SealObject(messageObject, secretKey, initializationVector); }
   public void setMessageObjects(HashSet<T> messageObjects) { this.messageObjects = Util.SealObject(messageObjects, secretKey, initializationVector); }
 
 }
