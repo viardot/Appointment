@@ -1,6 +1,9 @@
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.UUID;
+import java.util.HashSet;
 
 public class Appointment extends Item implements Serializable  {
 
@@ -67,4 +70,29 @@ public class Appointment extends Item implements Serializable  {
     return sql;
   }
 
+  public String getBySubject () {
+    String sql = "SELECT * FROM Appointments WHERE subject = '" + subject + "'";
+    return sql;  
+  }
+
+  public String getByPeriod () {
+    long start = Util.toEpoch(startDateTime);
+    long end   = Util.toEpoch(endDateTime);
+    String sql = "SELECT * FROM Appointments WHERE startDateTime >= " + start + " and endDateTime <= " + end;
+    return sql;
+  }
+
+  public HashSet<Appointment> returnAppointments (ResultSet rs) throws SQLException {
+    HashSet<Appointment> appointments = new HashSet<>();
+
+    while (rs.next()) {
+      String mySubject = rs.getString("subject");
+      LocalDateTime startDateTime = Util.toLocalDateTime(rs.getLong("startDateTime"));
+      LocalDateTime endDateTime = Util.toLocalDateTime(rs.getLong("endDateTime"));
+      Appointment appointment = new Appointment(mySubject, startDateTime, endDateTime);
+      appointment.setUUID(UUID.fromString(rs.getString("UUID")));
+      appointments.add(appointment);
+    }
+    return appointments;
+  }
 }

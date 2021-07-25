@@ -63,49 +63,13 @@ public class Database {
     stmt.executeUpdate(sql);
     return null;
   }
+  
+  public ResultSet getItem(String sql) throws SQLException, ClassNotFoundException {
 
-  public HashSet<Appointment> getAppointmentsByPeriod(LocalDateTime startDateTime, LocalDateTime endDateTime) throws SQLException, ClassNotFoundException {
-    
-    HashSet<Appointment> set = new HashSet<>();
-
-    long start = Util.toEpoch(startDateTime);
-    long end = Util.toEpoch(endDateTime);
-    
-    Connection con =  connectDB();
-    Statement stmt = con.createStatement();
-    String sql = "SELECT * FROM Appointments WHERE StartDateTime >= '"+ start + "' and EndDateTime <= '" + end + "'";
-    ResultSet rs = stmt.executeQuery(sql);
-    while(rs.next()){
-        Appointment appointment = new Appointment(rs.getString("subject")
-	       	                               ,Util.toLocalDateTime(rs.getLong("startDateTime"))
-					       ,Util.toLocalDateTime(rs.getLong("endDateTime")));
-        appointment.setUUID(UUID.fromString(rs.getString("UUID")));
-	set.add(appointment);  
-    }
-    return set;
-  }
-
-  public HashSet<Appointment> getAppointmentsBySubject(String subject) throws SQLException, ClassNotFoundException {
-
-    String mySubject = null;
-    LocalDateTime startDateTime = null;
-    LocalDateTime endDateTime = null;
-
-    HashSet<Appointment> appointments = new HashSet<>();
-    
     Connection con = connectDB();
     Statement stmt = con.createStatement();
-    String sql = "SELECT * FROM Appointments WHERE subject = '" + subject + "'";
     ResultSet rs = stmt.executeQuery(sql);
-    while (rs.next()){
-	    mySubject     = rs.getString("subject");
-	    startDateTime = Util.toLocalDateTime(rs.getLong("startDateTime"));
-	    endDateTime   = Util.toLocalDateTime(rs.getLong("endDateTime"));
-	    Appointment appointment = new Appointment(mySubject, startDateTime, endDateTime);
-            appointment.setUUID(UUID.fromString(rs.getString("UUID")));
-	    appointments.add(appointment);
-    }
-    return appointments;
+    return rs;
   }
   
   public HashSet<Appointment> getFirstSlot() throws SQLException, ClassNotFoundException {
@@ -184,45 +148,4 @@ public class Database {
     set.add(assignment);
     return set;
   }
-
-  public HashSet<Assignment> getAssignmentsBySubject(String subject) throws SQLException, ClassNotFoundException {
-
-    String mySubject = null;
-    LocalDateTime dueDateTime = null;
-
-    HashSet<Assignment> assignments = new HashSet<>();
-    
-    Connection con = connectDB();
-    Statement stmt = con.createStatement();
-    String sql = "SELECT * FROM Assignments WHERE subject = '" + subject + "'";
-    ResultSet rs = stmt.executeQuery(sql);
-    while (rs.next()){
-	    mySubject     = rs.getString("subject");
-	    dueDateTime = Util.toLocalDateTime(rs.getLong("dueDateTime"));
-	    Assignment assignment = new Assignment(mySubject, dueDateTime);
-            assignment.setUUID(UUID.fromString(rs.getString("UUID")));
-	    assignments.add(assignment);
-    }
-    return assignments;
-  }
-
-  public HashSet<Assignment> getAssignmentsByDueDateTime(LocalDateTime dueDateTime) throws SQLException, ClassNotFoundException {
-
-    HashSet<Assignment> set = new HashSet<>();
-    
-    long due = Util.toEpoch(dueDateTime);
-
-    Connection con = connectDB();
-    Statement stmt = con.createStatement();
-    String sql = "SELECT * FROM Assignments WHERE dueDateTime = '" + due + "'";
-    ResultSet rs = stmt.executeQuery(sql);
-    while (rs.next()){
-        Assignment assignment = new Assignment(rs.getString("subject")
-					       ,Util.toLocalDateTime(rs.getLong("dueDateTime")));
-        assignment.setUUID(UUID.fromString(rs.getString("UUID")));
-        set.add(assignment);  
-    }
-    return set;
-  }
-
 }

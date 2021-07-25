@@ -1,6 +1,9 @@
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashSet;
 
 public class Assignment extends Item implements Serializable {
 
@@ -57,4 +60,27 @@ public class Assignment extends Item implements Serializable {
     return sql;
   }
 
+  public String getBySubject() {
+    String sql = "SELECT * FROM Assignments WHERE subject = '" + subject + "'";
+    return sql;
+  }
+
+  public String getByDueDateTime() {
+    long due = Util.toEpoch(dueDateTime);
+    String sql = "SELECT * FROM Assignments WHERE dueDateTime = " + due;
+    return sql;
+  }
+
+  public HashSet<Assignment> returnAssignments(ResultSet rs) throws SQLException {
+    HashSet<Assignment> assignments = new HashSet<>();
+
+    while (rs.next()) {
+      String mySubject = rs.getString("subject");
+      LocalDateTime dueDateTime = Util.toLocalDateTime(rs.getLong("dueDateTime"));
+      Assignment assignment = new Assignment(mySubject, dueDateTime);
+      assignment.setUUID(UUID.fromString(rs.getString("UUID")));
+      assignments.add(assignment);
+    }
+    return assignments;
+  }
 }
