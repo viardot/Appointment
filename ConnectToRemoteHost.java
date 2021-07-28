@@ -12,7 +12,7 @@ public class ConnectToRemoteHost {
   private static String hostName = "localhost";
   private static Integer portNumber = 4444;
   
-  public static <T extends Serializable> Message getData(Message<T> message) {
+  public static Message getData(Message message) {
 
     try {
       SocketChannel socket = SocketChannel.open(new InetSocketAddress(hostName, portNumber));

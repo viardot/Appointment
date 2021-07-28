@@ -60,18 +60,23 @@ public class Assignment extends Item implements Serializable {
     return sql;
   }
 
+  public String getByUUID() {
+    String sql = "SELECT * FROM Assignments WHERE UUID = '" + uuid.toString() + "' and isActive = true";
+    return sql;  
+  }
+
   public String getBySubject() {
-    String sql = "SELECT * FROM Assignments WHERE subject = '" + subject + "'";
+    String sql = "SELECT * FROM Assignments WHERE subject = '" + subject + "' and isActive = true";
     return sql;
   }
 
   public String getByDueDateTime() {
     long due = Util.toEpoch(dueDateTime);
-    String sql = "SELECT * FROM Assignments WHERE dueDateTime = " + due;
+    String sql = "SELECT * FROM Assignments WHERE dueDateTime = " + due + " and isActive = true";
     return sql;
   }
 
-  public HashSet<Assignment> returnAssignments(ResultSet rs) throws SQLException {
+  public  HashSet<Assignment> returnItems(ResultSet rs) throws SQLException {
     HashSet<Assignment> assignments = new HashSet<>();
 
     while (rs.next()) {

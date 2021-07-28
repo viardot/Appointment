@@ -3,6 +3,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.PreparedStatement;
 
 import java.time.LocalDateTime;
 
@@ -54,6 +55,11 @@ public class Database {
     Assignment assignment = new Assignment();
     sql = assignment.createTable();
     stmt.executeUpdate(sql);
+
+    Appointment_Assignment appointment_assignment = new Appointment_Assignment();
+    sql = appointment_assignment.createTable();
+    stmt.executeUpdate(sql);
+
   }
 
   public <T> HashSet<T> setItem (String sql) throws SQLException, ClassNotFoundException {
@@ -67,8 +73,8 @@ public class Database {
   public ResultSet getItem(String sql) throws SQLException, ClassNotFoundException {
 
     Connection con = connectDB();
-    Statement stmt = con.createStatement();
-    ResultSet rs = stmt.executeQuery(sql);
+    PreparedStatement pstmt = con.prepareStatement(sql);
+    ResultSet rs = pstmt.executeQuery();
     return rs;
   }
   

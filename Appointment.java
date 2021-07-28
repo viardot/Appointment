@@ -70,20 +70,25 @@ public class Appointment extends Item implements Serializable  {
     return sql;
   }
 
+  public String getByUUID() {
+    String sql = "SELECT * FROM Appointments WHERE UUID = '" + uuid.toString() + "' and isActive = true";
+    return sql;
+  }
+
   public String getBySubject () {
-    String sql = "SELECT * FROM Appointments WHERE subject = '" + subject + "'";
+    String sql = "SELECT * FROM Appointments WHERE subject = '" + subject + "' and isActive = true";
     return sql;  
   }
 
   public String getByPeriod () {
     long start = Util.toEpoch(startDateTime);
     long end   = Util.toEpoch(endDateTime);
-    String sql = "SELECT * FROM Appointments WHERE startDateTime >= " + start + " and endDateTime <= " + end;
+    String sql = "SELECT * FROM Appointments WHERE startDateTime >= " + start + " and endDateTime <= " + end + " and isActive= true";
     return sql;
   }
 
-  public HashSet<Appointment> returnAppointments (ResultSet rs) throws SQLException {
-    HashSet<Appointment> appointments = new HashSet<>();
+  public  HashSet<Appointment> returnItems (ResultSet rs) throws SQLException {
+    HashSet<Appointment> appointments = new HashSet<Appointment>();
 
     while (rs.next()) {
       String mySubject = rs.getString("subject");

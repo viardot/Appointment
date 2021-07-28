@@ -82,13 +82,14 @@ public class Server {
 	
         Message message = Util.readMessageFromSocket(socket);
 	
-	Item request;
+	Item request = ItemFactory.getItem(message.getMessageObjectType());
+	request = ItemFactory.castItem(message);
+
 	message.setMessage("NOK");
 	message.setCode(400);
 
 	switch (message.getEvent()) {
 	  case "getFirstSlot":
-	    request = (Appointment)message.<Appointment>getMessageObject();
 	    if (((Appointment)request).getSubject() == null && ((Appointment)request).getStartDateTime() == null && ((Appointment)request).getEndDateTime() == null) {
 	      try {
 	        message.setMessageObjects(db.getFirstSlot());
@@ -102,12 +103,25 @@ public class Server {
             break;
 
           case "getAppointmentsBySubject":
-	    request = (Appointment)message.<Appointment>getMessageObject();
-            if (((Appointment)request).getSubject() != null && ((Appointment)request).getStartDateTime() == null && ((Appointment)request).getEndDateTime() == null) {
+	    if (((Appointment)request).getSubject() != null && ((Appointment)request).getStartDateTime() == null && ((Appointment)request).getEndDateTime() == null) {
 	      try { 
 		String sql = ((Appointment)request).getBySubject();
 		ResultSet rs = db.getItem(sql);
-                message.setMessageObjects(((Appointment)request).returnAppointments(rs));
+	        message.setMessageObjects(request.<Appointment>returnItems(rs));
+		message.setMessage("OK");
+	        message.setCode(100);
+	      } catch (SQLException | ClassNotFoundException e) {
+                message.setMessage("NOK");
+	        message.setCode(500);
+	      }
+            }
+	    break;
+          case "getAppointmentByUUID":
+            if (request.getUUID() != null) {
+              try {
+		String sql = request.getByUUID();
+		ResultSet rs = db.getItem(sql);
+	        message.setMessageObjects(request.<Appointment>returnItems(rs));
 	        message.setMessage("OK");
 	        message.setCode(100);
 	      } catch (SQLException | ClassNotFoundException e) {
@@ -116,14 +130,12 @@ public class Server {
 	      }
             }
 	    break;
-      
 	  case "getAppointmentsByPeriod":
-	    request = (Appointment)message.<Appointment>getMessageObject();
             if (((Appointment)request).getSubject() == null && ((Appointment)request).getStartDateTime() != null && ((Appointment)request).getEndDateTime() != null) {  
               try {
 		String sql = ((Appointment)request).getByPeriod();
 		ResultSet rs = db.getItem(sql);
-		message.setMessageObjects(((Appointment)request).returnAppointments(rs));
+	        message.setMessageObjects(request.<Appointment>returnItems(rs));
 	        message.setMessage("OK");
 	        message.setCode(100);
 	      } catch (SQLException | ClassNotFoundException e) {
@@ -134,11 +146,10 @@ public class Server {
 	    break;
 
 	  case "setAppointment":
-	    request = (Appointment)message.<Appointment>getMessageObject();
             if (((Appointment)request).getSubject() != null && ((Appointment)request).getStartDateTime() != null && ((Appointment)request).getEndDateTime() != null) {
 	      Set<Appointment> appointments = null;
 	      try {
-                String sql = ((Appointment)request).toSQLInsert();
+                String sql = request.toSQLInsert();
 	        appointments = db.<Appointment>setItem(sql);
 	        message.setMessage("OK");
 	        message.setCode(100);
@@ -150,7 +161,6 @@ public class Server {
 	    break;
 
           case "getNextAssignment":
-	    request = (Assignment)message.<Assignment>getMessageObject();
             if (((Assignment)request).getSubject() == null && ((Assignment)request).getDueDateTime() == null){
               try {
 	        message.setMessageObjects(db.getNextAssignment());
@@ -163,12 +173,11 @@ public class Server {
 	    }
             break;
           case "getAssignmentsBySubject":
-	    request = (Assignment)message.<Assignment>getMessageObject();
             if (((Assignment)request).getSubject() != null && ((Assignment)request).getDueDateTime() == null) {
 	      try {    
    	        String sql = ((Assignment)request).getBySubject();
 		ResultSet rs = db.getItem(sql);
-		message.setMessageObjects(((Assignment)request).returnAssignments(rs));
+	        message.setMessageObjects(request.<Assignment>returnItems(rs));
 	        message.setMessage("OK");
   	        message.setCode(100);
 	      } catch (SQLException | ClassNotFoundException e) {
@@ -177,13 +186,26 @@ public class Server {
 	      }
 	    }
 	    break;
+          case "getAssignmentByUUID":
+            if (request.getUUID() != null) {
+              try {
+		String sql = request.getByUUID();
+		ResultSet rs = db.getItem(sql);
+	        message.setMessageObjects(request.<Assignment>returnItems(rs));
+	        message.setMessage("OK");
+	        message.setCode(100);
+	      } catch (SQLException | ClassNotFoundException e) {
+                message.setMessage("NOK");
+	        message.setCode(500);
+	      }
+            }
+	    break;
 	  case "getAssignmentsByDueDateTime":
-	    request = (Assignment)message.<Assignment>getMessageObject();
             if (((Assignment)request).getSubject() == null && ((Assignment)request).getDueDateTime() != null) {
 	      try {    
 		String sql = ((Assignment)request).getByDueDateTime();
 		ResultSet rs = db.getItem(sql);
-		message.setMessageObjects(((Assignment)request).returnAssignments(rs));
+	        message.setMessageObjects(request.<Assignment>returnItems(rs));
 	        message.setMessage("OK");
 		message.setCode(100);
 	      } catch (SQLException | ClassNotFoundException e) {
@@ -193,15 +215,59 @@ public class Server {
 	    }
 	    break;
 	  case "setAssignment":
-	    request = (Assignment)message.<Assignment>getMessageObject();
 	    if (((Assignment)request).getSubject() != null && ((Assignment)request).getDueDateTime() != null) {
 	      Set<Assignment> assignments = null;
 	      try {
-	        String sql = ((Assignment)request).toSQLInsert();
+	        String sql = request.toSQLInsert();
 		assignments = db.<Assignment>setItem(sql);
 	        message.setMessage("OK");
 	        message.setCode(100);
               } catch (SQLException | ClassNotFoundException e) {
+                message.setMessage("NOK");
+		message.setCode(500);
+	      }
+	    }
+	    break;
+	  case "getAppointmentByAssignmentUUID":
+            if (((Appointment_Assignment)request).getAppointmentUUID() == null && ((Appointment_Assignment)request).getAssignmentUUID() != null) {
+	      try {    
+		String sql = ((Appointment_Assignment)request).getAppointmentByAssignmentUUID();
+		ResultSet rs = db.getItem(sql);
+		Appointment appointment = new Appointment();
+		message.setMessageObjects(appointment.returnItems(rs));
+		message.setMessage("OK");
+		message.setCode(100);
+	      } catch (SQLException | ClassNotFoundException e) {
+                message.setMessage("NOK");
+		message.setCode(500);
+		e.printStackTrace();
+	      }
+	    }
+	    break;
+	  case "getAssignmentByAppointmentUUID":
+            if (((Appointment_Assignment)request).getAppointmentUUID() != null && ((Appointment_Assignment)request).getAssignmentUUID() == null) {
+	      try {    
+		String sql = ((Appointment_Assignment)request).getAssignmentByAppointmentUUID();
+		ResultSet rs = db.getItem(sql);
+	        Assignment assignment = new Assignment();
+		message.setMessageObjects(assignment.returnItems(rs));
+	        message.setMessage("OK");
+		message.setCode(100);
+	      } catch (SQLException | ClassNotFoundException e) {
+                message.setMessage("NOK");
+		message.setCode(500);
+	      }
+	    }
+	    break;
+	  case "setAppointment_Assignment":
+	    if (((Appointment_Assignment)request).getAppointmentUUID() != null && ((Appointment_Assignment)request).getAssignmentUUID() != null) {
+	      Set<Appointment_Assignment> set = null;
+	      try {
+                String sql = request.toSQLInsert();
+                set = db.<Appointment_Assignment>setItem(sql);
+		message.setMessage("OK");
+		message.setCode(100);
+	      } catch (SQLException | ClassNotFoundException e) {
                 message.setMessage("NOK");
 		message.setCode(500);
 	      }

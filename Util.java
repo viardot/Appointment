@@ -45,7 +45,7 @@ public class Util {
     return ldt;
   }
   
-  public static <T extends Serializable> void writeMessageToSocket(SocketChannel socket, Message<T> message) {
+  public static void writeMessageToSocket(SocketChannel socket, Message message) {
 
     try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
          ObjectOutputStream oos = new ObjectOutputStream(baos)) {
@@ -61,14 +61,14 @@ public class Util {
     }
   }
 
-  public static <T extends Serializable> Message readMessageFromSocket(SocketChannel socket) {
+  public static Message readMessageFromSocket(SocketChannel socket) {
     
     byte[] bytes = readSocket(socket);
       
     try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
          ObjectInputStream ois = new ObjectInputStream(bais)) {
 
-      Message<T> message = (Message<T>)ois.readObject();
+      Message message = (Message)ois.readObject();
       return message;
 
     } catch (IOException | ClassNotFoundException e) {
