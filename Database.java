@@ -61,21 +61,19 @@ public class Database {
     stmt.executeUpdate(sql);
 
   }
-
-  public <T> HashSet<T> setItem (String sql) throws SQLException, ClassNotFoundException {
-
-    Connection con = connectDB();
-    Statement stmt = con.createStatement();
-    stmt.executeUpdate(sql);
-    return null;
-  }
-  
   public ResultSet getItem(String sql) throws SQLException, ClassNotFoundException {
 
     Connection con = connectDB();
     PreparedStatement pstmt = con.prepareStatement(sql);
     ResultSet rs = pstmt.executeQuery();
     return rs;
+  }
+
+  public void updateItem(String sql) throws SQLException, ClassNotFoundException {
+
+    Connection con = connectDB();
+    PreparedStatement pstmt = con.prepareStatement(sql);
+    pstmt.executeUpdate();
   }
   
   public HashSet<Appointment> getFirstSlot() throws SQLException, ClassNotFoundException {

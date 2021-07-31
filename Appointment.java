@@ -18,7 +18,6 @@ public class Appointment extends Item implements Serializable  {
     //Do Nothing
   }
 
-
   public Appointment(String subject, LocalDateTime startDateTime, LocalDateTime endDateTime) {
     this.startDateTime  = startDateTime;
     this.endDateTime = endDateTime;
@@ -84,6 +83,45 @@ public class Appointment extends Item implements Serializable  {
     long start = Util.toEpoch(startDateTime);
     long end   = Util.toEpoch(endDateTime);
     String sql = "SELECT * FROM Appointments WHERE startDateTime >= " + start + " and endDateTime <= " + end + " and isActive= true";
+    return sql;
+  }
+
+  public String updateActive() {
+    String sql = "UPDATE Appointments SET isActive = " + isActive + " WHERE UUID = '" + uuid.toString() + "'";
+    return sql;
+  }
+
+  public String updateSubject() {
+    String sql = "UPDATE Appointments SET subject = '" + subject + "' WHERE UUID = '" + uuid.toString() + "'";
+    return sql;
+  }
+
+  public String updateStartDateTime() {
+    long start = Util.toEpoch(startDateTime);
+    String sql = "UPDATE Appointments SET startDateTime = '" + start + "' WHERE UUID = '" + uuid.toString() + "'";
+    return sql;
+  }
+
+  public String updateEndDateTime() {
+    long end = Util.toEpoch(endDateTime);
+    String sql = "UPDATE Appointments SET startDateTime = '" + end + "' WHERE UUID = '" + uuid.toString() + "'";
+    return sql;
+  }
+
+  public String deleteByUUID() {
+    String sql = "DELETE FROM Appointments WHERE UUID = '" + uuid.toString() + "' and isActive = false";
+    return sql;
+  }
+
+  public String deleteBySubject() {
+    String sql = "DELETE FROM Appointments WHERE subject = '" + subject + "' and isActive = false";
+    return sql;
+  }
+
+  public String deleteByPeriod() {
+    long start = Util.toEpoch(startDateTime);
+    long end = Util.toEpoch(endDateTime);
+    String sql = "DELETE FROM Appointments WHERE startDateTime >= " + start + " and endDateTime <= " + end + " and isActive = false";
     return sql;
   }
 

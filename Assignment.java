@@ -76,6 +76,28 @@ public class Assignment extends Item implements Serializable {
     return sql;
   }
 
+  public String updateActive() {
+    String sql = "UPDATE Assignments SET isActive = " + isActive + " WHERE UUID = '" + uuid.toString() + "'";
+    return sql;
+  }
+
+  public String deleteByUUID() {
+    String sql = "DELETE FROM Assignments WHERE UUID  = '" + uuid.toString() + "' and isActive = false";
+    return sql;
+  }
+
+  public String deleteBySubject() {
+    String sql = "DELETE FROM Assignments WHERE subject = '" + subject + "' and isActive = false";
+    return sql;
+  }
+
+  public String deleteByDueDateTime() {
+    long due = Util.toEpoch(dueDateTime);
+
+    String sql = "DELETE FROM Assignments WHERE dueDateTime = " + due + " and isActive = false";
+    return sql;
+  }
+
   public  HashSet<Assignment> returnItems(ResultSet rs) throws SQLException {
     HashSet<Assignment> assignments = new HashSet<>();
 

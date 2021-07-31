@@ -77,6 +77,26 @@ public class Appointment_Assignment extends Item implements Serializable {
     return sql;
   }
 
+  public String updateActive() {
+    String sql = "UPDATE Appointment_Assignment SET isActive = " + isActive + " WHERE UUID = '" + uuid.toString() + "'";
+    return sql;
+  }
+
+  public String deleteByUUID() {
+    //TODO Delete By UUID
+    return null;
+  }
+
+  public String deleteByAppointmentUUID(){
+    String sql = "DELETE FROM Appointment_Assignment WHERE AppointmentUUID = '" + AppointmentUUID + "' and isActive = false";
+    return null;
+  }
+
+  public String deleteByAssignmentUUID() {
+    //TODO Delete by AssignmentUUID
+    return null;
+  }
+
   public <T> HashSet<T> returnItems(ResultSet rs) throws SQLException {
     HashSet<Appointment_Assignment> relations = new HashSet<>();
     
